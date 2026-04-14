@@ -7,7 +7,7 @@ This project is a **production-grade multi-agent AI system** designed to orchest
 Unlike traditional single-model applications, this system demonstrates how modern AI systems are evolving into **modular, agent-driven architectures** capable of iterative improvement, transparency, and scalability.
 
 ---
-
+![Architecture Diagram](assets/architecture.png)
 ## 🧠 Core Idea
 
 Instead of relying on a single LLM response, this system breaks down problem-solving into specialized agents:
