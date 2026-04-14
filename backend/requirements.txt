@@ -1,0 +1,32 @@
+# ── Web framework ─────────────────────────────
+fastapi>=0.115.0,<1.0.0
+uvicorn[standard]>=0.30.0
+pydantic>=2.7.0
+pydantic-settings>=2.3.0
+
+# ── LangChain + LangGraph ────────────────────
+langchain>=0.3.0,<0.4.0
+langchain-openai>=0.2.0,<0.3.0
+langchain-groq>=0.2.0,<0.3.0
+langchain-ollama>=0.2.0,<0.3.0
+langchain-community>=0.3.0,<0.4.0
+langgraph>=0.2.0,<0.3.0
+langsmith>=0.2.0
+
+# ── Search ───────────────────────────────────
+tavily-python>=0.3.0
+
+# ── Database ─────────────────────────────────
+sqlalchemy[asyncio]>=2.0.0
+asyncpg>=0.29.0
+alembic>=1.13.0
+
+# ── Redis (optional caching) ────────────────
+redis>=5.0.0
+
+# ── HTTP ─────────────────────────────────────
+httpx>=0.27.0
+
+# ── Utilities ────────────────────────────────
+python-dotenv>=1.0.0
+python-multipart>=0.0.9

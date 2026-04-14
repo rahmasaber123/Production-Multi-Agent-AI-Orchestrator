@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Orchestrator</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&family=Plus+Jakarta+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<style>
+:root{
+  --f:'Plus Jakarta Sans',system-ui,sans-serif;
+  --fs:'Source Serif 4',Georgia,serif;
+  --fm:'JetBrains Mono',monospace;
+  --bg:#FAFBFC;--card:#FFFFFF;--s2:#F3F4F6;--s3:#E9EBF0;
+  --accent:#4338CA;--accent-lo:#4338CA0C;
+  --ink:#111827;--ink2:#4B5563;--ink3:#9CA3AF;
+  --brd:#E5E7EB;
+  --red:#DC2626;--green:#059669;
+  --c-plan:#2563EB;--c-res:#7C3AED;--c-write:#059669;--c-crit:#D97706;--c-fin:#BE185D;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;overflow:hidden}
+body{font-family:var(--f);background:var(--bg);color:var(--ink);-webkit-font-smoothing:antialiased;font-size:14px}
+::-webkit-scrollbar{width:5px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:#CBD5E1;border-radius:3px}
+button{font-family:var(--f);cursor:pointer}
+
+.app{display:flex;flex-direction:column;height:100vh;height:100dvh;max-width:820px;margin:0 auto;padding:0 24px}
+
+/* header */
+.hd{display:flex;align-items:center;gap:12px;padding:16px 0;border-bottom:1px solid var(--brd);flex-shrink:0}
+.hd-logo{width:30px;height:30px;border-radius:8px;background:var(--accent);display:grid;place-items:center}
+.hd-logo svg{width:14px;height:14px;color:#fff}
+.hd h1{font-family:var(--fs);font-size:1.15rem;font-weight:600;flex:1}
+.hd-dot{width:6px;height:6px;border-radius:50%;background:var(--ink3);transition:all .3s}
+.hd-dot.ok{background:var(--green);box-shadow:0 0 0 3px #05966920}
+.hd-dot.err{background:var(--red)}
+
+/* pipeline */
+.pipe{display:flex;align-items:center;gap:1px;padding:12px 0 8px;flex-shrink:0}
+.pn{display:flex;align-items:center;gap:5px;padding:4px 10px;border-radius:5px;font-size:.68rem;font-weight:600;color:var(--ink3);transition:all .3s;white-space:nowrap;letter-spacing:.03em;text-transform:uppercase}
+.pn i{width:5px;height:5px;border-radius:50%;background:currentColor;opacity:.3;transition:all .3s}
+.pa{color:var(--ink3);font-size:.5rem;margin:0 1px;opacity:.25}
+.pn.on{color:var(--nc);background:color-mix(in srgb,var(--nc) 8%,transparent)}
+.pn.on i{opacity:1;box-shadow:0 0 4px var(--nc);animation:pd 1.4s ease-in-out infinite}
+.pn.ok{color:var(--nc);opacity:.4}
+.pn.ok i{opacity:.4}
+@keyframes pd{0%,100%{transform:scale(1)}50%{transform:scale(1.6)}}
+
+/* messages - THIS is the scroll container */
+.msgs{flex:1 1 0;min-height:0;overflow-y:auto;padding:16px 0;display:flex;flex-direction:column;gap:10px}
+.mi{animation:fi .25s ease-out both;flex-shrink:0}
+@keyframes fi{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+
+/* empty */
+.empty{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;text-align:center;padding:40px 20px}
+.empty h2{font-family:var(--fs);font-size:1.25rem;font-weight:400;color:var(--ink2)}
+.empty-ex{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin-top:4px}
+.empty-ex button{padding:6px 14px;border-radius:20px;border:1px solid var(--brd);background:var(--card);color:var(--ink2);font-size:.78rem;transition:all .2s;box-shadow:0 1px 2px #0001}
+.empty-ex button:hover{border-color:var(--accent);color:var(--accent)}
+
+/* user bubble */
+.mu{align-self:flex-end;max-width:70%;background:var(--accent);color:#fff;padding:10px 16px;border-radius:16px 16px 4px 16px;font-size:.88rem;line-height:1.5;box-shadow:0 2px 8px #4338CA20}
+
+/* ── ACCORDION (CSS grid trick = no max-height bugs) ── */
+.ac{background:var(--card);border:1px solid var(--brd);border-radius:10px;overflow:hidden;box-shadow:0 1px 3px #0000000A}
+.ac-h{display:flex;align-items:center;gap:8px;padding:10px 14px;font-size:.72rem;font-weight:600;text-transform:uppercase;letter-spacing:.04em;cursor:pointer;user-select:none;transition:background .15s}
+.ac-h:hover{background:var(--s2)}
+.ac-dot{width:7px;height:7px;border-radius:3px;flex-shrink:0}
+.ac-lbl{flex:1}
+.ac-spin{width:13px;height:13px;border:2px solid var(--brd);border-top-color:currentColor;border-radius:50%;animation:spin .6s linear infinite;flex-shrink:0}
+@keyframes spin{to{transform:rotate(360deg)}}
+.ac-icn{width:14px;height:14px;flex-shrink:0;opacity:.5}
+.ac-icn.chk{color:var(--green)}
+.ac-arr{width:14px;height:14px;color:var(--ink3);transition:transform .2s;flex-shrink:0}
+.ac-arr.shut{transform:rotate(-90deg)}
+
+/* The grid wrapper is the key: grid-template-rows animates 0fr <-> 1fr */
+.ac-wrap{display:grid;grid-template-rows:1fr;transition:grid-template-rows .25s ease}
+.ac-wrap.shut{grid-template-rows:0fr}
+.ac-wrap>div{overflow:hidden}
+.ac-inner{padding:10px 14px 12px;font-size:.84rem;line-height:1.65;color:var(--ink2);border-top:1px solid var(--brd)}
+
+/* final result always open */
+.fc{border-color:#4338CA18;box-shadow:0 2px 12px #4338CA08}
+
+/* stream cursor */
+.sc::after{content:'▋';animation:bl .6s step-end infinite;color:var(--accent);margin-left:1px;font-size:.8em}
+@keyframes bl{50%{opacity:0}}
+
+/* chips */
+.cl{display:flex;flex-wrap:wrap;gap:5px;margin-top:8px}
+.ch{padding:3px 9px;border-radius:4px;font-size:.72rem;background:var(--s2);border:1px solid var(--brd);color:var(--ink2)}
+
+/* score */
+.sbar{height:4px;border-radius:2px;background:var(--s3);margin-top:6px;overflow:hidden}
+.sfill{height:100%;border-radius:2px;transition:width .6s ease}
+
+/* error */
+.ec{border-color:#DC262618}
+.ec .ac-h{color:var(--red)}
+.ec .ac-inner{color:var(--red)}
+
+/* feedback */
+.fb textarea{width:100%;min-height:64px;max-height:120px;padding:10px 12px;border-radius:8px;border:1px solid var(--brd);background:var(--bg);color:var(--ink);font-family:var(--f);font-size:.84rem;resize:vertical;outline:none;margin-bottom:10px;transition:border-color .2s}
+.fb textarea:focus{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent-lo)}
+.fb-acts{display:flex;gap:8px;justify-content:flex-end}
+.fb-acts button{padding:7px 18px;border-radius:7px;border:none;font-size:.82rem;font-weight:500;transition:all .15s}
+.fb-acts button:hover{transform:translateY(-1px)}
+.fb-skip{background:var(--s3);color:var(--ink2)}
+.fb-go{background:var(--accent);color:#fff;box-shadow:0 2px 6px #4338CA25}
+
+/* input */
+.ia{padding:10px 0 18px;flex-shrink:0}
+.ir{display:flex;gap:8px;align-items:flex-end}
+.iw{flex:1}
+.iw textarea{width:100%;min-height:46px;max-height:130px;padding:11px 16px;border-radius:10px;border:1px solid var(--brd);background:var(--card);color:var(--ink);font-family:var(--f);font-size:.88rem;line-height:1.5;resize:none;outline:none;transition:border-color .2s,box-shadow .2s;box-shadow:0 1px 3px #0000000A}
+.iw textarea::placeholder{color:var(--ink3)}
+.iw textarea:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-lo)}
+.sbtn{width:46px;height:46px;border-radius:10px;border:none;background:var(--accent);color:#fff;display:grid;place-items:center;transition:transform .12s,box-shadow .2s;flex-shrink:0;box-shadow:0 2px 6px #4338CA25}
+.sbtn:hover{transform:translateY(-1px);box-shadow:0 4px 10px #4338CA30}
+.sbtn:active{transform:translateY(0)}
+.sbtn:disabled{opacity:.3;cursor:not-allowed;transform:none;box-shadow:none}
+.sbtn svg{width:17px;height:17px}
+
+.toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:var(--red);color:#fff;padding:9px 20px;border-radius:8px;font-size:.82rem;box-shadow:0 4px 16px #DC262630;animation:fi .2s ease-out;z-index:100;display:none}
+
+/* prose */
+.prose h1,.prose h2,.prose h3{font-family:var(--fs);color:var(--ink);margin-top:1.1em;margin-bottom:.35em}
+.prose h1{font-size:1.4rem}.prose h2{font-size:1.15rem}.prose h3{font-size:1rem}
+.prose p{line-height:1.7;margin-bottom:.75em;color:var(--ink2)}
+.prose ul,.prose ol{padding-left:1.4em;margin-bottom:.75em;color:var(--ink2)}
+.prose li{margin-bottom:.25em}
+.prose strong{color:var(--ink);font-weight:600}
+.prose code{font-family:var(--fm);background:var(--s2);padding:.1em .3em;border-radius:3px;font-size:.84em;color:var(--accent)}
+.prose pre{background:var(--s2);padding:.85em;border-radius:7px;overflow-x:auto;margin-bottom:.75em;border:1px solid var(--brd)}
+.prose pre code{background:none;padding:0;color:var(--ink2)}
+.prose blockquote{border-left:2px solid var(--accent);padding-left:.85em;margin-left:0;color:var(--ink2);font-style:italic}
+
+@media(max-width:600px){
+  .app{padding:0 14px}
+  .hd h1{font-size:1rem}
+  .pn{padding:3px 6px;font-size:.6rem}
+  .pa{display:none}
+  .mu{max-width:88%}
+}
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="hd">
+    <div class="hd-logo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg></div>
+    <h1>Orchestrator</h1>
+    <div class="hd-dot" id="hd"></div>
+  </header>
+  <div class="pipe">
+    <div class="pn" data-a="planner" style="--nc:var(--c-plan)"><i></i>Plan</div><span class="pa">›</span>
+    <div class="pn" data-a="researcher" style="--nc:var(--c-res)"><i></i>Research</div><span class="pa">›</span>
+    <div class="pn" data-a="writer" style="--nc:var(--c-write)"><i></i>Write</div><span class="pa">›</span>
+    <div class="pn" data-a="critic" style="--nc:var(--c-crit)"><i></i>Critique</div><span class="pa">›</span>
+    <div class="pn" data-a="finalizer" style="--nc:var(--c-fin)"><i></i>Finalize</div>
+  </div>
+  <div class="msgs" id="msgs">
+    <div class="empty" id="empty">
+      <h2>What would you like to explore?</h2>
+   
+    </div>
+  </div>
+  <div class="ia">
+    <div class="ir">
+      <div class="iw"><textarea id="inp" placeholder="Ask something..." rows="1" onkeydown="kd(event)" oninput="ag(this)"></textarea></div>
+      <button class="sbtn" id="btn" onclick="go()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg></button>
+    </div>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+const API='';
+const AG={planner:{l:'Plan',c:'#2563EB'},researcher:{l:'Research',c:'#7C3AED'},writer:{l:'Write',c:'#059669'},critic:{l:'Critique',c:'#D97706'},finalizer:{l:'Finalize',c:'#BE185D'},pipeline:{l:'Done',c:'#4338CA'}};
+let busy=false,curTask=null;
+
+async function ck(){const d=document.getElementById('hd');try{const r=await fetch(`${API}/api/v1/health`);d.className=r.ok?'hd-dot ok':'hd-dot err'}catch{d.className='hd-dot err'}}
+ck();setInterval(ck,30000);
+
+function ag(el){el.style.height='auto';el.style.height=Math.min(el.scrollHeight,130)+'px'}
+function kd(e){if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();go()}}
+function ex(b){document.getElementById('inp').value=b.textContent;ag(document.getElementById('inp'));go()}
+
+async function go(){
+  const inp=document.getElementById('inp'),q=inp.value.trim();
+  if(!q||busy)return;
+  busy=true;document.getElementById('btn').disabled=true;
+  inp.value='';inp.style.height='auto';
+  const em=document.getElementById('empty');if(em)em.remove();
+  addU(q);rpipe();
+  const cards={};
+  try{
+    const r=await fetch(`${API}/api/v1/generate`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({query:q,max_iterations:2})});
+    if(!r.ok){const b=await r.json().catch(()=>({}));const d=b.detail;throw new Error(typeof d==='string'?d:Array.isArray(d)?d.map(x=>x.msg||JSON.stringify(x)).join('; '):(r.statusText||'Request failed'))}
+    const{task_id}=await r.json();
+    curTask=task_id;
+    const sse=await fetch(`${API}/api/v1/generate/${task_id}/stream`);
+    if(!sse.ok||!sse.body)throw new Error('Stream failed');
+    const rd=sse.body.getReader(),dc=new TextDecoder();let buf='';
+    while(true){
+      const{done,value}=await rd.read();if(done)break;
+      buf+=dc.decode(value,{stream:true});const lines=buf.split('\n');buf=lines.pop()||'';
+      for(const ln of lines){const t=ln.trim();if(!t.startsWith('data: '))continue;try{const ev=JSON.parse(t.slice(6));if(ev.status==='done')break;hev(ev,cards)}catch{}}
+    }
+    // Only fetch final if we never got a Result card from SSE
+    if(!cards._fr){
+      const fr=await fetch(`${API}/api/v1/tasks/${task_id}`);
+      if(fr.ok){const tk=await fr.json();if(tk.final_answer)addFin(tk.final_answer)}
+    }
+  }catch(e){const msg=typeof e==='string'?e:(e&&e.message)?String(e.message):'Something went wrong';te(msg);addEc(msg)}
+  finally{busy=false;document.getElementById('btn').disabled=false;document.getElementById('inp').focus()}
+}
+
+function hev(ev,cards){
+  const{agent,status,content,metadata}=ev,a=AG[agent];if(!a)return;
+  if(status==='started'){
+    spa(agent);
+    // Don't create a separate finalizer card — its output goes straight to Result
+    if(agent==='finalizer')return;
+    cards[agent]=mkC(agent,a);ap(cards[agent].el);sb();
+  }
+  if(status==='streaming'&&content&&cards[agent]){cards[agent].at(content);sb()}
+  if(status==='awaiting_feedback'){spd('critic');showFb();sb();return}
+  if(status==='completed'){
+    spd(agent);
+    if(cards[agent])cards[agent].fin();
+    if(metadata&&cards[agent]){
+      if(agent==='planner'&&metadata.plan)cards[agent].rp(metadata.plan);
+      if(agent==='researcher'&&metadata.research_notes)cards[agent].rn(metadata.research_notes);
+      if(agent==='critic'&&metadata.critique)cards[agent].rc(metadata.critique);
+    }
+    if(agent==='pipeline'&&content){addFin(content);cards._fr=true}
+    sb();
+  }
+  if(status==='error')addEc(typeof content==='string'?content:JSON.stringify(content)||'Something went wrong');
+}
+
+function rpipe(){document.querySelectorAll('.pn').forEach(n=>n.classList.remove('on','ok'))}
+function spa(a){const n=document.querySelector(`.pn[data-a="${a}"]`);if(!n)return;document.querySelectorAll('.pn.on').forEach(x=>{x.classList.remove('on');x.classList.add('ok')});n.classList.add('on')}
+function spd(a){const n=document.querySelector(`.pn[data-a="${a}"]`);if(n){n.classList.remove('on');n.classList.add('ok')}}
+
+function addU(t){const d=document.createElement('div');d.className='mi mu';d.textContent=t;ap(d)}
+
+/* ── Accordion card builder ── */
+function mkC(key,a){
+  const el=document.createElement('div');el.className='mi ac';
+  let isOpen=true;
+
+  // header
+  const h=document.createElement('div');h.className='ac-h';h.style.color=a.c;
+  h.innerHTML=`<div class="ac-dot" style="background:${a.c}"></div><span class="ac-lbl">${a.l}</span><div class="ac-spin" style="border-top-color:${a.c}"></div>`;
+
+  // body: grid wrapper > overflow div > inner
+  const wrap=document.createElement('div');wrap.className='ac-wrap';
+  const over=document.createElement('div');
+  const inner=document.createElement('div');inner.className='ac-inner sc';
+  over.appendChild(inner);wrap.appendChild(over);
+  el.appendChild(h);el.appendChild(wrap);
+
+  // toggle
+  h.onclick=()=>{
+    isOpen=!isOpen;
+    wrap.classList.toggle('shut',!isOpen);
+    const arr=h.querySelector('.ac-arr');
+    if(arr)arr.classList.toggle('shut',!isOpen);
+  };
+
+  let txt='';
+  return{
+    el,
+    at(c){txt+=c;inner.textContent=txt},
+    fin(){
+      inner.classList.remove('sc');
+      // swap spinner for check + arrow
+      const sp=h.querySelector('.ac-spin');if(sp)sp.remove();
+      h.insertAdjacentHTML('beforeend',`<svg class="ac-icn chk" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg><svg class="ac-arr" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>`);
+      // collapse after a moment
+      setTimeout(()=>{isOpen=false;wrap.classList.add('shut');h.querySelector('.ac-arr').classList.add('shut')},500);
+    },
+    rp(plan){
+      if(!plan)return;let s='';
+      if(plan.steps&&plan.steps.length){s+='<div class="cl">';plan.steps.forEach((v,i)=>s+=`<span class="ch">${i+1}. ${esc(v)}</span>`);s+='</div>'}
+      if(plan.key_risks&&plan.key_risks.length){s+='<div class="cl" style="margin-top:6px">';plan.key_risks.forEach(v=>s+=`<span class="ch" style="border-color:#D9770625;color:#D97706">${esc(v)}</span>`);s+='</div>'}
+      inner.innerHTML+=s;
+    },
+    rn(notes){
+      if(!notes||!notes.length)return;
+      let s='<div class="cl">';notes.slice(0,6).forEach(n=>s+=`<span class="ch">${esc(n)}</span>`);
+      if(notes.length>6)s+=`<span class="ch" style="color:var(--accent)">+${notes.length-6} more</span>`;
+      s+='</div>';inner.innerHTML+=s;
+    },
+    rc(cr){
+      if(!cr)return;const s=cr.score||0;
+      const col=s>=80?'var(--green)':s>=60?'var(--c-crit)':'var(--red)';
+      let o=`<div style="margin-top:8px;display:flex;align-items:center;gap:8px"><span style="font-weight:600;color:${col};font-size:1rem">${s}<span style="font-size:.72rem;opacity:.5">/100</span></span></div><div class="sbar"><div class="sfill" style="width:${s}%;background:${col}"></div></div>`;
+      if(cr.issues&&cr.issues.length){o+='<div class="cl" style="margin-top:6px">';cr.issues.forEach(v=>o+=`<span class="ch" style="border-color:#DC262615;color:var(--red)">${esc(v)}</span>`);o+='</div>'}
+      inner.innerHTML+=o;
+    }
+  };
+}
+
+function addFin(content){
+  const el=document.createElement('div');el.className='mi ac fc';
+  el.innerHTML=`<div class="ac-h" style="color:var(--c-fin)"><div class="ac-dot" style="background:var(--c-fin)"></div><span class="ac-lbl">Result</span></div>`;
+  const wrap=document.createElement('div');wrap.className='ac-wrap';
+  const over=document.createElement('div');
+  const inner=document.createElement('div');inner.className='ac-inner';inner.innerHTML=md(content);
+  over.appendChild(inner);wrap.appendChild(over);el.appendChild(wrap);ap(el);sb();
+}
+
+function addEc(msg){
+  const el=document.createElement('div');el.className='mi ac ec';
+  el.innerHTML=`<div class="ac-h"><div class="ac-dot" style="background:var(--red)"></div><span class="ac-lbl">Error</span></div>`;
+  const wrap=document.createElement('div');wrap.className='ac-wrap';
+  const over=document.createElement('div');
+  const inner=document.createElement('div');inner.className='ac-inner';inner.textContent=msg;
+  over.appendChild(inner);wrap.appendChild(over);el.appendChild(wrap);ap(el);sb();
+}
+
+function showFb(){
+  const el=document.createElement('div');el.className='mi ac fb';el.id='fbCard';
+  el.innerHTML=`<div class="ac-h" style="color:var(--accent)"><div class="ac-dot" style="background:var(--accent)"></div><span class="ac-lbl">Your feedback</span></div>`;
+  const wrap=document.createElement('div');wrap.className='ac-wrap';
+  const over=document.createElement('div');
+  const inner=document.createElement('div');inner.className='ac-inner';
+  inner.innerHTML=`<textarea id="fbInp" placeholder="Guide the final answer — or skip to let the AI decide..."></textarea><div class="fb-acts"><button class="fb-skip" onclick="sendFb('')">Skip</button><button class="fb-go" onclick="sendFb(document.getElementById('fbInp').value)">Finalize</button></div>`;
+  over.appendChild(inner);wrap.appendChild(over);el.appendChild(wrap);ap(el);
+  document.getElementById('fbInp').focus();sb();
+}
+
+async function sendFb(text){
+  const c=document.getElementById('fbCard');if(c)c.remove();
+  if(text){const d=document.createElement('div');d.className='mi mu';d.textContent=text;ap(d)}
+  spa('finalizer');
+  try{await fetch(`${API}/api/v1/tasks/${curTask}/feedback`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({feedback:text})})}
+  catch(e){addEc('Failed to submit feedback')}
+}
+
+function ap(el){document.getElementById('msgs').appendChild(el)}
+function sb(){const m=document.getElementById('msgs');requestAnimationFrame(()=>m.scrollTop=m.scrollHeight)}
+function esc(s){const d=document.createElement('div');d.textContent=s||'';return d.innerHTML}
+function te(msg){const t=document.getElementById('toast');t.textContent=msg;t.style.display='block';setTimeout(()=>t.style.display='none',4000)}
+
+function md(t){
+  if(!t)return'';let h=esc(t);
+  h=h.replace(/^### (.+)$/gm,'<h3>$1</h3>');h=h.replace(/^## (.+)$/gm,'<h2>$1</h2>');h=h.replace(/^# (.+)$/gm,'<h1>$1</h1>');
+  h=h.replace(/\*\*\*(.+?)\*\*\*/g,'<strong><em>$1</em></strong>');h=h.replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>');h=h.replace(/\*(.+?)\*/g,'<em>$1</em>');
+  h=h.replace(/```(\w*)\n([\s\S]*?)```/g,'<pre><code>$2</code></pre>');h=h.replace(/`([^`]+)`/g,'<code>$1</code>');
+  h=h.replace(/^- (.+)$/gm,'<li>$1</li>');h=h.replace(/(<li>.*<\/li>\n?)+/g,'<ul>$&</ul>');h=h.replace(/^\d+\. (.+)$/gm,'<li>$1</li>');
+  h=h.replace(/^&gt; (.+)$/gm,'<blockquote>$1</blockquote>');
+  h=h.replace(/^---$/gm,'<hr style="border:none;border-top:1px solid var(--brd);margin:12px 0">');
+  h=h.replace(/\n\n/g,'</p><p>');
+  h='<div class="prose"><p>'+h+'</p></div>';
+  h=h.replace(/<p><\/p>/g,'');
+  h=h.replace(/<p>(<h[1-3]>)/g,'$1');h=h.replace(/(<\/h[1-3]>)<\/p>/g,'$1');
+  h=h.replace(/<p>(<pre>)/g,'$1');h=h.replace(/(<\/pre>)<\/p>/g,'$1');
+  h=h.replace(/<p>(<ul>)/g,'$1');h=h.replace(/(<\/ul>)<\/p>/g,'$1');
+  h=h.replace(/<p>(<blockquote>)/g,'$1');h=h.replace(/(<\/blockquote>)<\/p>/g,'$1');
+  h=h.replace(/<p>(<hr[^>]*>)<\/p>/g,'$1');
+  return h;
+}
+
+document.getElementById('inp').focus();
+</script>
+</body>
+</html>
