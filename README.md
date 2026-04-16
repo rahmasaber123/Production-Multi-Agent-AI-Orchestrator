@@ -266,9 +266,7 @@ into one cohesive, production-ready solution.
 ---
 
 ## 🧑‍💻 Author
-
-Ahmed Tamer
-Penetration Testing & Cybersecurity Student
-Specialized in AI Systems & Security Engineering
+Rahma Saber Abbas 
+ai engineer 
 
 ---
