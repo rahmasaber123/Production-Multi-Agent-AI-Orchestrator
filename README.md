@@ -266,7 +266,7 @@ into one cohesive, production-ready solution.
 ---
 
 ## 🧑‍💻 Author
-Rahma Saber Abbas 
-ai engineer 
+* Rahma Saber Abbas 
+* ##ai engineer 
 
 ---
